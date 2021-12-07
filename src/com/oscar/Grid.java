@@ -14,7 +14,10 @@ public class Grid {
     private enum Direction {
         HORIZONTAL,
         VERTICAL,
-        DIAGONAL
+        DIAGONAL,
+        VERTICAL_INVERSE,
+        HORIZONTAL_INVERSE,
+
     }
     // Inner class to increase encapsulation
     private class Coordinate{
@@ -40,27 +43,47 @@ public class Grid {
     }
 
     public void fillGrid(List<String> words){
+        Collections.shuffle(coordinates);
         for (String word: words){
-            Collections.shuffle(coordinates);
             for (Coordinate coordinate: coordinates){
                 int x = coordinate.x;//get shuffled coordinate from coordinate list and put it in this int
                 int y = coordinate.y;//get shuffles coordinate from coodinate list and put in in this int
                 Direction selectedDirection = getDirection(word, coordinate);
-                if(doesWordFit(word,coordinate)) {
-
-                    for (char c: word.toCharArray()){
-                        contents[x][y++] = c;
+                if(selectedDirection != null) {
+                    switch (selectedDirection){
+                        case VERTICAL:
+                            for (char c :word.toCharArray()){
+                                contents [x++][y] = c;
+                            }
+                            break;
+                        case DIAGONAL:
+                            for (char c : word.toCharArray()){
+                                contents [x++][y++] = c;
+                            }
+                            break;
+                        case HORIZONTAL:
+                            for (char c : word.toCharArray()){
+                                contents [x][y++] = c;
+                            }
+                            break;
+                        case VERTICAL_INVERSE:
+                            System.out.println(word);
+                            for( char c : word.toCharArray()){
+                                contents [x--][y] = c;
+                            }
+                            break;
+                        case HORIZONTAL_INVERSE:
+                            System.out.println(word + "This is for horizinal inverse");
+                            for (char c : word.toCharArray()){
+                                contents [x][y--] = c;
+                            }
+                            break;
                     }
-                    break;//need this break to finsh for loop
+                    break;
                 }
-//                if(y + word.length() < gridSize){
-//                    for (char c: word.toCharArray()){
-//                        contents[x][y++] = c;
-//                    }
-//                    break;
-//                }
             }
         }
+        fillWords();
     }
 
     public void displayGrid(){
@@ -71,41 +94,52 @@ public class Grid {
             System.out.println(""); // at the start of a new column
         }
     }
-
-    private boolean existArea(String word, Coordinate coordinate){
-        if (coordinate.y +word.length() < gridSize){
-            for (int i = 0; i < word.length(); i++) {
-                if(contents[coordinate.x][coordinate.y + i] == '_'){
-                    System.out.print(word + "This is the inner if loop");
-                    System.out.println(contents[coordinate.x][coordinate.y +i]);
-                    return true;
+    public void fillWords(){
+        String randomWords = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        for (int i = 0; i < gridSize; i++) {
+            for (int j = 0; j < gridSize; j++) {
+                if(contents[i][j] == '_'){
+                    int randomInt = ThreadLocalRandom.current().nextInt(0,randomWords.length());
+                    contents[i][j] = randomWords.charAt(randomInt);
                 }
             }
-            return true;
         }
-        return false;
     }
 
-    private boolean doesWordFit(String word, Coordinate cord){
-        //check if the words length will fit there
-        if(cord.y + word.length() < gridSize){
-            // lets check if for that area so lets say coordinate x = 1 y = [1,2,3}
-            for (int i = 0; i < word.length(); i++) {
-                System.out.println(contents[cord.x][cord.y+1]);
-                System.out.println(word + " This is the inner for  loop");
-                if(contents[cord.x][cord.y + i] != '_' ){
-                    // instead of checking for one we will go through each untill we find a notchar
-                    System.out.println(word + " This is the inner if loop");
-//                    System.out.println(contents[cord.x][cord.y+1]);
-                    return false;
-                }
-            }
-            System.out.println("This is true");
-            return true;
-        }
-        System.out.println("This is false");
-        return false; //this is alwaays going to return also
-    }
+//    private boolean existArea(String word, Coordinate coordinate){
+//        if (coordinate.y +word.length() < gridSize){
+//            for (int i = 0; i < word.length(); i++) {
+//                if(contents[coordinate.x][coordinate.y + i] == '_'){
+//                    System.out.print(word + "This is the inner if loop");
+//                    System.out.println(contents[coordinate.x][coordinate.y +i]);
+//                    return true;
+//                }
+//            }
+//            return true;
+//        }
+//        return false;
+//    }
+//
+//    private boolean doesWordFit(String word, Coordinate cord){
+//        //check if the words length will fit there
+//        if(cord.y + word.length() < gridSize){
+//            // lets check if for that area so lets say coordinate x = 1 y = [1,2,3}
+//            for (int i = 0; i < word.length(); i++) {
+//                System.out.println(contents[cord.x][cord.y+1]);
+//                System.out.println(word + " This is the inner for  loop");
+//                if(contents[cord.x][cord.y + i] != '_' ){
+//                    // instead of checking for one we will go through each untill we find a notchar
+//                    System.out.println(word + " This is the inner if loop");
+////                    System.out.println(contents[cord.x][cord.y+1]);
+//                    return false;
+//                }
+//            }
+//            System.out.println("This is true");
+//            return true;
+//        }
+//        System.out.println("This is false");
+//        return false; //this is alwaays going to return also
+//    }
 
     private Direction getDirection( String word, Coordinate coordinate){
         List<Direction> directions = Arrays.asList(Direction.values());
@@ -117,40 +151,81 @@ public class Grid {
         }
         return null;
     }
+
+    /**
+     * Function
+     * @param word
+     * @param cord
+     * @param direction
+     * @return
+     */
     private boolean doesFit(String word, Coordinate cord, Direction direction){
         int wordLength = word.length();
-
         switch (direction){
             case DIAGONAL:
-                if(cord.y + wordLength > gridSize || cord.x > gridSize)
+                if(cord.y + wordLength > gridSize || cord.x + wordLength > gridSize)
                     return false;
                 for (int i = 0; i < wordLength; i++) {
                     if(contents[cord.x + i][cord.y + i] !='_')
                         return false;
                 }
                 break;
-
-            case VERTICAL:
+            case HORIZONTAL:
                 if(cord.y + wordLength > gridSize)
                     return false;
                 for (int i = 0; i < wordLength; i++) {
-                    if( contents[cord.x] [cord.y + 1] != '_')
-                        return true;
-                }
-                break;
-
-            case HORIZONTAL:
-                if(cord.x + wordLength > gridSize)
-                    return false;
-                for (int i = 0; i < wordLength; i++) {
-                    if(contents[cord.x +1] [cord.y] != '_')
+                    if( contents[cord.x] [cord.y + i] != '_')
                         return false;
                 }
                 break;
+            case VERTICAL:
+                if(cord.x + wordLength > gridSize)
+                    return false;
+                for (int i = 0; i < wordLength; i++) {
+                    if(contents[cord.x +i] [cord.y] != '_')
+                        return false;
+                }
+                break;
+            case VERTICAL_INVERSE:
+//                System.out.println(word);
+                if(cord.x  < wordLength ){
+//                    System.out.println(word);
+//                    System.out.println(cord.x);
+                    return false;
+                }
+
+                for (int i = wordLength - 1; i >= 0 ; i--) {
+                    if(contents[cord.x - i][cord.y] != '_')
+                        return false;
+                }
+                break;
+
+            case HORIZONTAL_INVERSE:
+                if(cord.y < wordLength)
+                    return false;
+                for (int i = wordLength -1; i >=0; i--) {
+                    if(contents[cord.x][cord.y - i] != '_')
+                    return false;
+                }
+                break;
+
+
+//            case VERTICAL_INVERSE:
+////                System.out.println(word);
+//                if(cord.x < wordLength){
+//                    System.out.println(word);
+//                    System.out.println(cord.x);
+//                    return false;
+//                }
+//
+//
+//                for (int i = 0; i < wordLength ; i++) {
+//                    if(contents[cord.x - i][cord.y] != '_')
+//                        return false;
+//                }
+//                break;
         }
 
         return true;
     }
-
-
 }
